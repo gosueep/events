@@ -5,10 +5,10 @@ import os
 from flask import Flask
 
 app = Flask(__name__)
-conn = Connector()
+connector = Connector()
 
-def getconn() -> pg8000.connections.Connection:
-    conn: pg8000.connections.Connection = conn.connect(
+def getconn():
+    conn = connector.connect(
         "hacknc22:us-central1:events-data",
         "pg8000",
         user="postgres",
@@ -18,7 +18,7 @@ def getconn() -> pg8000.connections.Connection:
     return conn
 
 pool = sqlalchemy.create_engine(
-    "pg8000+pg8000://",
+    "postgresql+pg8000://",
     creator=getconn,
 )
 

@@ -1,4 +1,6 @@
 Flask==2.1.0
 gunicorn==20.1.0
 google-api-python-client
+google-cloud-sql-connector
 sqlalchemy
+pg8000
