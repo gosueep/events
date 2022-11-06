@@ -22,10 +22,10 @@ pool = sqlalchemy.create_engine(
     creator=getconn,
 )
 
-# insert statement
-insert_stmt = sqlalchemy.text(
-    "INSERT INTO my_table (id, title) VALUES (:id, :title)",
-)
+# # insert statement
+# insert_stmt = sqlalchemy.text(
+#     "INSERT INTO my_table (id, title) VALUES (:id, :title)",
+# )
 
 with pool.connect() as db_conn:
     # insert into database
@@ -51,7 +51,7 @@ def test_get():
         creator=getconn,
     )
     with pool.connect() as db_conn:
-        result = db_conn.execute("SELECT * from events;").fetchall()
+        result = db_conn.execute("SELECT * from events_info;").fetchall()
     return result
 
 if __name__ == "__main__":
