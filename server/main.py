@@ -76,7 +76,7 @@ def init_device():
     print(d)
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute(text("INSERT INTO device (device_id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)"), device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
+        db_conn.execute(text("INSERT INTO device (id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)"), device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
 
 # RETURN GEN ID
 @app.post("/create_event")
@@ -84,7 +84,7 @@ def create_event():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute("INSERT INTO event (device_id, name, description, start_time, end_time) VALUES (:device_id, :name, :description, :start_time, :end_time)", device_id=d['device_id'], name=d['name'], description = d['description'], start_time=d['start_time'], end_time=d['end_time'])
+        db_conn.execute(text("INSERT INTO event (device_id, name, description, start_time, end_time) VALUES (:device_id, :name, :description, :start_time, :end_time)"), device_id=d['device_id'], name=d['name'], description = d['description'], start_time=d['start_time'], end_time=d['end_time'])
         # return db_conn.execute("SELECT event_id FROM event WHERE device_id = ")
         output = {}
         output['event_id'] = db_conn.execute("SELECT MAX(event_id) FROM event")
