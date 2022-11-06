@@ -1,0 +1,31 @@
+{
+	"configurations": [
+		{
+			"name": "Win32",
+			"includePath": [
+				"${workspaceFolder}/android/app/src/main/cpp",
+				"${workspaceFolder}/third_party/skia/include",
+				"${workspaceFolder}/third_party/skia",
+				"C:/Users/aehar/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/include",
+				"C:/Users/aehar/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include",
+				"C:/Users/aehar/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/x86_64-linux-android"
+			],
+			"defines": [
+				"_DEBUG",
+				"UNICODE",
+			],
+			"compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+			"cStandard": "c11",
+			"cppStandard": "c++20",
+			"intelliSenseMode": "clang-x64",
+			"compilerArgs": [],
+			"browse": {
+				"path": [
+					"${workspaceFolder}/**"
+				],
+				"limitSymbolsToIncludedHeaders": true
+			}
+		}
+	],
+	"version": 4
+}

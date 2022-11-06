@@ -24,6 +24,7 @@ if (flutterVersionName == null) {
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+//apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 def keystoreProperties = new Properties()
@@ -34,15 +35,15 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     compileSdkVersion 33
-    ndkVersion flutter.ndkVersion
+    ndkVersion '25.1.8937393'
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_11
     }
 
     sourceSets {
@@ -61,6 +62,25 @@ android {
         versionName flutterVersionName
 
 		manifestPlaceholders += [MAPS_API_KEY: mapsApiKey]
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++2a", "-Wall", "-Wextra"
+                arguments "-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static",
+                        "-DCMAKE_ANDROID_NDK=${android.ndkDirectory}"
+            }
+        }
+
+        ndk {
+            // Until wasmtime supports more architectures, this will do
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
     }
 
    signingConfigs {

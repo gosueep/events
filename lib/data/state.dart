@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:typed_data';
 import 'dart:developer';
 import 'dart:io';
+import 'package:EventsApp/data/types.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:sqflite/sqflite.dart';
@@ -17,14 +18,18 @@ import 'package:flutter/foundation.dart';
 import 'package:network_tools/network_tools.dart';
 import 'package:EventsApp/data/network.dart';
 //import 'package:EventsApp/data/types.dart';
-import 'package:EventsApp/data/mediastore.dart';
+import 'package:EventsApp/data/native_bridge.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class CurrentState extends ChangeNotifier {
   //final RecipeDatabase recipeDatabase = RecipeDatabase();
   final Server server = Server();
+  int texture = 0;
 
   bool hasLoaded = false;
+  bool haveMapController = false;
+  late GoogleMapController mapController;
 
   Future<void> startup() async {
     if (!hasLoaded) {
@@ -38,12 +43,103 @@ class CurrentState extends ChangeNotifier {
       //recipes = await recipeDatabase.getAllRecipes(ingredients);
 
       // Handle this async because it may take a long time
-      //server.startup(recipeDatabase, ingredients, recipes);
+      server.startup();
+
+      texture = await NativeBridge().createTexture();
 
       hasLoaded = true;
       notifyListeners();
     }
   }
+
+  void setMapController(GoogleMapController controller) {
+    mapController = controller;
+    haveMapController = true;
+    reloadNearbyEvents();
+  }
+
+  void zoomToLocation(double latitude, double longitude) {
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(latitude, longitude), zoom: 18),
+      ),
+    );
+  }
+
+  List<EventInfo> recentEvents = [];
+  List<PersonInfo> recentPeople = [];
+  Future<void> reloadNearbyEvents() async {
+    if (haveMapController) {
+// TODO call network
+      recentEvents = [
+        EventInfo(
+          event: 0,
+          name: "WahooEvent",
+          description: "A really cool description",
+          numberProximity: 67,
+          latitude: 39.7510,
+          longitude: -105.2226,
+        )
+      ];
+
+      recentPeople = [
+        PersonInfo(
+          name: "Bob",
+          latitude: 39.44,
+          longitude: -105.11,
+        )
+      ];
+
+/*
+      var normalizedEvents = <EventInfo>[];
+      var normalizedPeople = <PersonInfo>[];
+
+      for (var event in recentEvents) {
+        var normalized = await mapController
+            .getScreenCoordinate(LatLng(event.latitude, event.longitude));
+        var newEvent = EventInfo(
+            event: event.event,
+            name: event.name,
+            description: event.description,
+            numberProximity: event.numberProximity,
+            latitude: normalized.y.toDouble(),
+            longitude: normalized.x.toDouble());
+        normalizedEvents.add(newEvent);
+      }
+
+      for (var person in recentPeople) {
+        var normalized = await mapController
+            .getScreenCoordinate(LatLng(person.latitude, person.longitude));
+        var newPerson = PersonInfo(
+            name: person.name,
+            latitude: normalized.y.toDouble(),
+            longitude: normalized.x.toDouble());
+        normalizedPeople.add(newPerson);
+      }
+      */
+
+      //await NativeBridge().sendRecent(normalizedEvents, normalizedPeople);
+      await NativeBridge().sendRecent(recentEvents, recentPeople);
+    }
+  }
+
+  List<EventInfo> nearbyEvents() {
+    return recentEvents;
+  }
+
+  List<PersonInfo> nearbyPeople() {
+    return recentPeople;
+  }
+
+  Future<void> sendCameraPosition(
+      double latitude, double longitude, double zoom, double tilt) async {
+    await NativeBridge().sendCameraPosition(latitude, longitude, zoom, tilt);
+  }
+
+  void sendCreateEvent(
+      String name, String description, double latitude, double longitude) {}
+
+  void changeName(String name) {}
 }
 
 class PluginAccess {

@@ -56,7 +56,8 @@ class _CameraViewState extends State<CameraView> {
             ? CameraPreview(pluginAccess.rearCamera!)
             : const Center(child: CircularProgressIndicator());
       }),
-      floatingActionButton: Consumer<PluginAccess>(builder: (context, pluginAccess, child) {
+      floatingActionButton:
+          Consumer<PluginAccess>(builder: (context, pluginAccess, child) {
         return FloatingActionButton(
           onPressed: () async {
             try {

@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import "dart:async";
 
 import 'package:flutter/material.dart';
 //import 'package:EventsApp/views/widgets/recipe_card.dart';
@@ -11,6 +13,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:EventsApp/views/widgets/events.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:EventsApp/views/widgets/create_event.dart';
+import 'package:EventsApp/views/widgets/change_name.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -20,8 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final List<AppLifecycleState> stateHistory = <AppLifecycleState>[];
   bool isLoading = true;
-  late GoogleMapController mapController;
-  final LatLng initialLocation = const LatLng(45.521563, -122.677433);
+  LatLng initialLocation = const LatLng(0, 0);
   Location currentLocation = Location();
 
   @override
@@ -33,7 +38,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    CurrentState currentState =
+        Provider.of<CurrentState>(context, listen: false);
+    currentState.setMapController(controller);
     currentLocation.onLocationChanged.listen((l) {
       //mapController.animateCamera(
       //  CameraUpdate.newCameraPosition(
@@ -44,6 +51,58 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       //  ),
       //);
     });
+  }
+
+  //Timer? cameraMoveTimer;
+  void _onCameraMove(CameraPosition position) async {
+    //if (cameraMoveTimer != null) {
+    //  cameraMoveTimer?.cancel();
+    //}
+
+    //cameraMoveTimer = Timer(const Duration(milliseconds: 10), () async {
+    CurrentState currentState =
+        Provider.of<CurrentState>(context, listen: false);
+    //var center =
+    //    await currentState.mapController.getScreenCoordinate(position.target);
+//
+    //await currentState.sendCameraPosition(center.y.toDouble(),
+    //    center.x.toDouble(), position.zoom, position.bearing);
+
+    var topLeft = await currentState.mapController
+        .getLatLng(ScreenCoordinate(x: 0, y: 0));
+
+    //await currentState.sendCameraPosition(
+    //    position.target.latitude - topLeft.latitude,
+    //    position.target.longitude - topLeft.longitude,
+    //    position.zoom,
+    //    position.bearing);
+    await currentState.sendCameraPosition(
+        topLeft.latitude, topLeft.longitude, position.zoom, position.bearing);
+    // LAAAAAAGY
+    //await currentState.reloadNearbyEvents();
+    //});
+  }
+
+  void _onMapLongPress(LatLng location) {
+    Navigator.of(context).push(PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => CreateEventForm(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      ),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.ease;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    ));
   }
 
   @override
@@ -58,13 +117,33 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           Provider.of<CurrentState>(context, listen: false);
       await currentState.startup();
 
-      PluginAccess pluginAccess =
-          Provider.of<PluginAccess>(context, listen: false);
-      await pluginAccess.loadCamera();
+      //PluginAccess pluginAccess =
+      //    Provider.of<PluginAccess>(context, listen: false);
+      //await pluginAccess.loadCamera();
 
-      setState(() {
-        isLoading = false;
+      var location = await Geolocator.getCurrentPosition();
+      initialLocation = LatLng(location.latitude, location.longitude);
+      await currentState.sendCameraPosition(
+          location.latitude, location.longitude, 18.0, 0.0);
+      await currentState.reloadNearbyEvents();
+
+      Future.delayed(const Duration(milliseconds: 250), () {
+        setState(() {
+          isLoading = false;
+        });
       });
+    });
+  }
+
+  Future<void> getNearby() async {
+    //var location = await Geolocator.getCurrentPosition();
+    //initialLocation = LatLng(location.latitude, location.longitude);
+    CurrentState currentState =
+        Provider.of<CurrentState>(context, listen: false);
+    currentState.reloadNearbyEvents();
+
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      getNearby();
     });
   }
 
@@ -88,7 +167,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
-            Icon(Icons.restaurant_menu),
+            Icon(Icons.signal_wifi_4_bar),
             SizedBox(width: 10),
             Text("Events"),
           ],
@@ -98,14 +177,34 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ? const Center(child: CircularProgressIndicator())
           : Consumer<CurrentState>(
               builder: (context, currentState, child) {
-                return Center(
-                  child: GoogleMap(
-                    initialCameraPosition:
-                        CameraPosition(target: initialLocation),
-                    mapType: MapType.normal,
-                    onMapCreated: _onMapCreated,
-                    myLocationEnabled: true,
-                  ),
+                return Stack(
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: initialLocation,
+                        zoom: 18,
+                      ),
+                      mapType: MapType.normal,
+                      onMapCreated: _onMapCreated,
+                      onCameraMove: _onCameraMove,
+                      onLongPress: _onMapLongPress,
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: true,
+                      rotateGesturesEnabled: false, // TODO
+                    ),
+                    LayoutBuilder(builder: (context, constraints) {
+                      return IgnorePointer(
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                          child: Texture(
+                            textureId: currentState.texture,
+                            filterQuality: FilterQuality.none,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 );
               },
             ),
@@ -119,15 +218,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               children: <Widget>[
                 FloatingActionButton(
                   heroTag: null,
-                  onPressed: () {},
-                  tooltip: "Modify store ingredients",
-                  child: const Icon(Icons.sell),
-                ),
-                FloatingActionButton(
-                  heroTag: null,
-                  onPressed: () {},
-                  tooltip: "Add recipe",
-                  child: const Icon(Icons.add),
+                  onPressed: () async {
+                    await currentState.reloadNearbyEvents();
+                    Navigator.of(context).push(PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          EventsList(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        const begin = Offset(1.0, 0.0);
+                        const end = Offset.zero;
+                        const curve = Curves.ease;
+
+                        var tween = Tween(begin: begin, end: end)
+                            .chain(CurveTween(curve: curve));
+
+                        return SlideTransition(
+                          position: animation.drive(tween),
+                          child: child,
+                        );
+                      },
+                    ));
+                  },
+                  tooltip: "View events nearby",
+                  child: const Icon(Icons.signal_wifi_4_bar),
                 ),
                 SpeedDial(
                   icon: Icons.settings,
@@ -136,14 +249,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   spaceBetweenChildren: 20,
                   children: [
                     SpeedDialChild(
-                      onTap: () async {},
-                      label: "Load recipes from backup",
-                      child: const Icon(Icons.file_open),
-                    ),
-                    SpeedDialChild(
-                      onTap: () async {},
-                      label: "Backup all recipes",
-                      child: const Icon(Icons.download),
+                      onTap: () async {
+                        Navigator.of(context).push(PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  ChangeNameForm(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            const begin = Offset(1.0, 0.0);
+                            const end = Offset.zero;
+                            const curve = Curves.ease;
+
+                            var tween = Tween(begin: begin, end: end)
+                                .chain(CurveTween(curve: curve));
+
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
+                        ));
+                      },
+                      label: "Change Name",
+                      child: const Icon(Icons.person),
                     ),
                   ],
                 )
