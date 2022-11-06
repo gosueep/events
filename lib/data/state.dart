@@ -71,6 +71,7 @@ class CurrentState extends ChangeNotifier {
   Future<void> reloadNearbyEvents() async {
     if (haveMapController) {
 // TODO call network
+/*
       recentEvents = [
         EventInfo(
           event: 0,
@@ -79,6 +80,8 @@ class CurrentState extends ChangeNotifier {
           numberProximity: 67,
           latitude: 39.7510,
           longitude: -105.2226,
+          startTime: DateTime.parse('1969-07-20 20:18:04Z'),
+          endTime: DateTime.parse('1999-07-20 20:18:04Z'),
         )
       ];
 
@@ -89,6 +92,7 @@ class CurrentState extends ChangeNotifier {
           longitude: -105.11,
         )
       ];
+      */
 
 /*
       var normalizedEvents = <EventInfo>[];
@@ -118,8 +122,10 @@ class CurrentState extends ChangeNotifier {
       }
       */
 
+      await server.getCloseEvents(10);
+
       //await NativeBridge().sendRecent(normalizedEvents, normalizedPeople);
-      await NativeBridge().sendRecent(recentEvents, recentPeople);
+      await NativeBridge().sendRecent(server.recentEvents, server.recentPeople);
     }
   }
 
@@ -136,10 +142,23 @@ class CurrentState extends ChangeNotifier {
     await NativeBridge().sendCameraPosition(latitude, longitude, zoom, tilt);
   }
 
-  void sendCreateEvent(
-      String name, String description, double latitude, double longitude) {}
+  Future<void> sendLocation(double latitude, double longitude) async {
+    await server.sendLocation(latitude, longitude);
+  }
 
-  void changeName(String name) {}
+  Future<int> sendCreateEvent(String name, String description, double latitude,
+      double longitude, DateTime start, DateTime end) async {
+    return await server.createEvent(
+        name, description, latitude, longitude, start, end);
+  }
+
+  Future<void> changeName(String name) async {
+    await server.registerName(name);
+  }
+
+  Future<void> sendRsvp(int id) async {
+    await server.sendRsvp(id);
+  }
 }
 
 class PluginAccess {

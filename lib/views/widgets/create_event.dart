@@ -166,7 +166,12 @@ class _CreateEventFormState extends State<CreateEventForm> {
                             minimumSize: const Size.fromHeight(60)),
                         onPressed: () {
                           currentState.sendCreateEvent(
-                              name, description, latitude, longitude);
+                              name,
+                              description,
+                              latitude,
+                              longitude,
+                              DateTime.now(),
+                              DateTime.now());
                           Navigator.of(context).pop();
                         },
                         child: const Text("Create Event"),

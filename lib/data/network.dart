@@ -1,5 +1,6 @@
 import 'dart:convert';
 import "dart:async";
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -31,7 +32,7 @@ class Server {
 
   Server() {
     //if (kReleaseMode) {
-    //serverIp = "https://EventsApp.io";
+    serverIp = "https://events-app-v3xfr7jk4q-uc.a.run.app";
     //}
   }
 
@@ -188,6 +189,7 @@ class Server {
     if (serverIp != null) {
       var body = jsonEncode(<String, Object>{
         "device_id": user,
+        "range": withinMiles.toString(),
         "lat": currentLatitude.toString(),
         "long": currentLongitude.toString()
       });
@@ -216,6 +218,10 @@ class Server {
             numberProximity: eventMap["numberProximity"] as int,
             latitude: eventMap["lat"] as double,
             longitude: eventMap["long"] as double,
+            startTime: DateTime.fromMicrosecondsSinceEpoch(
+                eventMap["startTime"] as int),
+            endTime:
+                DateTime.fromMicrosecondsSinceEpoch(eventMap["endTime"] as int),
           );
           recentEvents.add(event);
         }
@@ -229,10 +235,46 @@ class Server {
           );
           recentPeople.add(person);
         }
+
+        return;
       }
     }
 
     recentEvents.clear();
+    recentPeople.clear();
+  }
+
+  Future<int> createEvent(String name, String description, double latitude,
+      double longitude, DateTime start, DateTime end) async {
+    if (serverIp != null) {
+      var body = jsonEncode(<String, Object>{
+        "device_id": user,
+        "name": name,
+        "description": description,
+        "latitude": latitude.toString(),
+        "longitude": longitude.toString(),
+        "start_time": start,
+        "end_time": end,
+      });
+      var res = await http
+          .post(Uri.parse("$serverIp/create_event"),
+              headers: <String, String>{
+                "Content-Type": "application/json",
+                "Content-Length": body.codeUnits.length.toString()
+              },
+              body: body)
+          .timeout(const Duration(seconds: 5), onTimeout: () async {
+        return http.Response("", 408);
+      });
+
+      if (res.statusCode != 202) {
+        serverIp = null;
+      } else {
+        return jsonDecode(body)["id"] as int;
+      }
+    }
+
+    return -1;
   }
 
 /*

@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:EventsApp/data/state.dart';
 import 'package:EventsApp/data/types.dart';
+import 'package:intl/intl.dart';
 
 class EventsList extends StatefulWidget {
   EventsList({
@@ -106,16 +107,73 @@ class _EventsListState extends State<EventsList> {
                                       ),
                                       textAlign: TextAlign.left,
                                     ),
-                                    Text(
-                                      "People nearby: ${currentState.nearbyEvents()[index].numberProximity}",
-                                      style: TextStyle(
-                                        color: Theme.of(context).brightness ==
-                                                Brightness.light
-                                            ? Colors.black
-                                            : Colors.white,
-                                        fontSize: 25,
-                                      ),
-                                      textAlign: TextAlign.left,
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.person),
+                                        Text(
+                                          "${currentState.nearbyEvents()[index].numberProximity}",
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.light
+                                                    ? Colors.black
+                                                    : Colors.white,
+                                            fontSize: 25,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        )
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.access_time),
+                                        Text(
+                                          DateFormat("yyyy/MM/dd H:m:s").format(
+                                              currentState
+                                                  .nearbyEvents()[index]
+                                                  .startTime),
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.light
+                                                    ? Colors.black
+                                                    : Colors.white,
+                                            fontSize: 25,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        )
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.access_time_filled),
+                                        Text(
+                                          DateFormat("yyyy/MM/dd H:m:s").format(
+                                              currentState
+                                                  .nearbyEvents()[index]
+                                                  .endTime),
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.light
+                                                    ? Colors.black
+                                                    : Colors.white,
+                                            fontSize: 25,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        )
+                                      ],
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                          minimumSize:
+                                              const Size.fromHeight(60)),
+                                      onPressed: () async {
+                                        await currentState.sendRsvp(currentState
+                                            .nearbyEvents()[index]
+                                            .event);
+                                      },
+                                      child: const Text("RSVP"),
                                     )
                                   ])),
                         ]));

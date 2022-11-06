@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     //    center.x.toDouble(), position.zoom, position.bearing);
 
     var topLeft = await currentState.mapController
-        .getLatLng(ScreenCoordinate(x: 0, y: 0));
+        .getLatLng(const ScreenCoordinate(x: 0, y: 0));
 
     //await currentState.sendCameraPosition(
     //    position.target.latitude - topLeft.latitude,
@@ -136,10 +136,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> getNearby() async {
-    //var location = await Geolocator.getCurrentPosition();
+    var location = await Geolocator.getCurrentPosition();
     //initialLocation = LatLng(location.latitude, location.longitude);
     CurrentState currentState =
         Provider.of<CurrentState>(context, listen: false);
+    currentState.sendLocation(location.latitude, location.longitude);
     currentState.reloadNearbyEvents();
 
     Future.delayed(const Duration(milliseconds: 1000), () {

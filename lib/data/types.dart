@@ -5,15 +5,18 @@ class EventInfo {
   int numberProximity;
   double latitude;
   double longitude;
+  DateTime startTime;
+  DateTime endTime;
 
-  EventInfo({
-    required this.event,
-    required this.name,
-    required this.description,
-    required this.numberProximity,
-    required this.latitude,
-    required this.longitude,
-  });
+  EventInfo(
+      {required this.event,
+      required this.name,
+      required this.description,
+      required this.numberProximity,
+      required this.latitude,
+      required this.longitude,
+      required this.startTime,
+      required this.endTime});
 }
 
 class PersonInfo {
