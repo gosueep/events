@@ -31,9 +31,8 @@ def hello_world():
 def update_location():
     d = request.json 
     with pool.connect() as db_conn:
-        return
         # insert into database
-        # db_conn.execute("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:long, :lat))", id=d['device_id'], lat=d['lat'], long=d['long'], long=d['long'], lat=d['lat'])
+        db_conn.execute("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:longp, :latp))", id=d['device_id'], lat=d['lat'], long=d['long'], longp=long, latp=lat)
 
 @app.post("/rsvp")
 def rsvp():
