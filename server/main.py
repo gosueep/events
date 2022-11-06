@@ -32,7 +32,7 @@ with pool.connect() as db_conn:
     # db_conn.execute(insert_stmt, id="book1", title="Book One")
 
     # query database
-    result = db_conn.execute("SELECT * from events").fetchall()
+    result = db_conn.execute("SELECT * from events;").fetchall()
 
     # Do something with the results
     for row in result:
@@ -42,11 +42,17 @@ with pool.connect() as db_conn:
 @app.route("/")
 def hello_world():
     name = os.environ.get("NAME", "World")
-    return "Hello {}".format(result)
+    return "Hello {}".format(getconn())
 
 @app.route("/testGet")
 def test_get():
-    return "ANOTHER GET"
+    pool = sqlalchemy.create_engine(
+        "postgresql+pg8000://",
+        creator=getconn,
+    )
+    with pool.connect() as db_conn:
+        result = db_conn.execute("SELECT * from events;").fetchall()
+    return result
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
