@@ -14,7 +14,7 @@ def getconn():
         "pg8000",
         user="postgres",
         password="MZ{s.CxTb|JjvLBy",
-        db="events_info"
+        db="postgres"
     )
     return conn
 
