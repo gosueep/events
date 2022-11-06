@@ -35,7 +35,7 @@ def update_location():
         # insert into database
         # db_conn.execute("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:long, :lat))", id=d['device_id'], lat=d['lat'], long=d['long'], long=d['long'], lat=d['lat'])
 
-app.post("/rsvp")
+@app.post("/rsvp")
 def rsvp():
     d = request.json 
     with pool.connect() as db_conn:
@@ -52,7 +52,7 @@ def rsvp():
         return json.dumps(output)
 
 # return json dict of people
-app.post("/events")
+@app.post("/events")
 def get_events():
     d = request.json 
     with pool.connect() as db_conn:
@@ -63,14 +63,14 @@ def get_events():
         return json.dumps(output)
 
 
-app.post("/register")
+@app.post("/register")
 def register_profile():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
         db_conn.execute("INSERT INTO profile (event_id, device_id) VALUES (:event_id, :device_id)", event_id=d['event'], device_id=d['device_id'])
 
-app.post("/startup")
+@app.post("/startup")
 def init_device():
     d = request.json 
     with pool.connect() as db_conn:
@@ -78,7 +78,7 @@ def init_device():
         db_conn.execute("INSERT INTO device (device_id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)", device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
 
 # RETURN GEN ID
-app.post("/create_event")
+@app.post("/create_event")
 def create_event():
     d = request.json 
     with pool.connect() as db_conn:
