@@ -40,8 +40,8 @@ def update_location():
 def rsvp():
     d = request.json 
     with pool.connect() as db_conn:
-        # insert into database
-        db_conn.execute(text("UPDATE event SET attendees = attendees + 1 WHERE event_id = :event_id"), event_id=d['event'])
+        # # insert into database
+        # db_conn.execute(text("UPDATE event SET attendees = attendees + 1 WHERE event_id = :event_id"), event_id=d['event'])
 
         # if already in database / user already RSVP'd, do not add again 
         if db_conn.execute(text("COUNT(*) FROM rsvp WHERE event_id = :event_id AND device_id = :device_id")) < 1:
@@ -69,7 +69,7 @@ def register_profile():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute(text("INSERT INTO profile (event_id, device_id) VALUES (:event_id, :device_id)"), event_id=d['event'], device_id=d['device_id'])
+        db_conn.execute(text("INSERT INTO profile (name, device_id) VALUES (:event_id, :device_id) ON CONFLICT device_id DO UPDATE SET name = excluded.name "), name=d['name'], device_id=d['device_id'])
         return 202
 
 @app.post("/startup")
@@ -77,7 +77,7 @@ def init_device():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute(text("INSERT INTO device (id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)"), device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
+        db_conn.execute(text("INSERT INTO device (id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version) ON CONFLICT id (manufacturer, model, device_version, version) = (excluded.manufacturer, excluded.model, excluded.device_version, excluded.version)"), device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
         return 202
 
 # RETURN GEN ID
