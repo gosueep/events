@@ -164,17 +164,24 @@ class _EventsListState extends State<EventsList> {
                                         )
                                       ],
                                     ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                          minimumSize:
-                                              const Size.fromHeight(60)),
-                                      onPressed: () async {
-                                        await currentState.sendRsvp(currentState
-                                            .nearbyEvents()[index]
-                                            .event);
-                                      },
-                                      child: const Text("RSVP"),
-                                    )
+                                    !currentState.nearbyEvents()[index].haveRsvp
+                                        ? ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                                minimumSize:
+                                                    const Size.fromHeight(60)),
+                                            onPressed: () async {
+                                              await currentState.sendRsvp(
+                                                  currentState
+                                                      .nearbyEvents()[index]);
+                                              setState(() {
+                                                currentState
+                                                    .nearbyEvents()[index]
+                                                    .haveRsvp = true;
+                                              });
+                                            },
+                                            child: const Text("RSVP"),
+                                          )
+                                        : const SizedBox.shrink()
                                   ])),
                         ]));
                   },

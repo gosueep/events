@@ -116,7 +116,7 @@ class _ChangeNameFormState extends State<ChangeNameForm> {
                           currentState.changeName(name);
                           Navigator.of(context).pop();
                         },
-                        child: const Text("Create Event"),
+                        child: const Text("Change Name"),
                       ))
                     ],
                   ),

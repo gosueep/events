@@ -70,62 +70,64 @@ class CurrentState extends ChangeNotifier {
   List<PersonInfo> recentPeople = [];
   Future<void> reloadNearbyEvents() async {
     if (haveMapController) {
-// TODO call network
-/*
       recentEvents = [
         EventInfo(
           event: 0,
-          name: "WahooEvent",
-          description: "A really cool description",
-          numberProximity: 67,
+          name: "Mines Bash",
+          description: "A super wacky bash",
+          numberProximity: 2,
           latitude: 39.7510,
           longitude: -105.2226,
-          startTime: DateTime.parse('1969-07-20 20:18:04Z'),
-          endTime: DateTime.parse('1999-07-20 20:18:04Z'),
+          startTime: DateTime.parse('2021-07-20 20:18:04Z'),
+          endTime: DateTime.parse('2022-07-20 20:18:04Z'),
+        ),
+        EventInfo(
+          event: 1,
+          name: "Fall Extravaganza",
+          description: "Tons of free Fall inspired food",
+          numberProximity: 5,
+          latitude: 39.756168,
+          longitude: -105.222649,
+          startTime: DateTime.parse('2021-07-20 20:18:04Z'),
+          endTime: DateTime.parse('2022-07-20 20:18:04Z'),
+        ),
+        EventInfo(
+          event: 1,
+          name: "Rafting",
+          description: "Casual rafting for newcomers",
+          numberProximity: 3,
+          latitude: 39.75,
+          longitude: -105.2226,
+          startTime: DateTime.parse('2021-07-20 20:18:04Z'),
+          endTime: DateTime.parse('2022-07-20 20:18:04Z'),
         )
       ];
 
       recentPeople = [
         PersonInfo(
           name: "Bob",
-          latitude: 39.44,
-          longitude: -105.11,
-        )
+          latitude: 39.755552,
+          longitude: -105.222685,
+        ),
+        PersonInfo(name: "Harold", latitude: 39.755395, longitude: -105.222388),
+        PersonInfo(name: "Frank", latitude: 39.751252, longitude: -105.221465),
+        PersonInfo(name: "Darwin", latitude: 39.753395, longitude: -105.223388),
+        PersonInfo(name: "Ben", latitude: 39.755252, longitude: -105.223465),
+        PersonInfo(name: "1", latitude: 39.752395, longitude: -105.224388),
+        PersonInfo(name: "2", latitude: 39.757252, longitude: -105.222465),
+        PersonInfo(name: "3", latitude: 39.758395, longitude: -105.223388),
+        PersonInfo(name: "4", latitude: 39.752252, longitude: -105.223465),
+        PersonInfo(name: "1", latitude: 39.751395, longitude: -105.224388),
+        PersonInfo(name: "2", latitude: 39.757252, longitude: -105.227465),
+        PersonInfo(name: "3", latitude: 39.751395, longitude: -105.229388),
+        PersonInfo(name: "4", latitude: 39.751252, longitude: -105.229465),
       ];
-      */
 
-/*
-      var normalizedEvents = <EventInfo>[];
-      var normalizedPeople = <PersonInfo>[];
+      // Google Cloud issues for now
+      //await server.getCloseEvents(10);
 
-      for (var event in recentEvents) {
-        var normalized = await mapController
-            .getScreenCoordinate(LatLng(event.latitude, event.longitude));
-        var newEvent = EventInfo(
-            event: event.event,
-            name: event.name,
-            description: event.description,
-            numberProximity: event.numberProximity,
-            latitude: normalized.y.toDouble(),
-            longitude: normalized.x.toDouble());
-        normalizedEvents.add(newEvent);
-      }
-
-      for (var person in recentPeople) {
-        var normalized = await mapController
-            .getScreenCoordinate(LatLng(person.latitude, person.longitude));
-        var newPerson = PersonInfo(
-            name: person.name,
-            latitude: normalized.y.toDouble(),
-            longitude: normalized.x.toDouble());
-        normalizedPeople.add(newPerson);
-      }
-      */
-
-      await server.getCloseEvents(10);
-
-      //await NativeBridge().sendRecent(normalizedEvents, normalizedPeople);
-      await NativeBridge().sendRecent(server.recentEvents, server.recentPeople);
+      await NativeBridge().sendRecent(recentEvents, recentPeople);
+      //await NativeBridge().sendRecent(server.recentEvents, server.recentPeople);
     }
   }
 
@@ -156,8 +158,8 @@ class CurrentState extends ChangeNotifier {
     await server.registerName(name);
   }
 
-  Future<void> sendRsvp(int id) async {
-    await server.sendRsvp(id);
+  Future<void> sendRsvp(EventInfo info) async {
+    await server.sendRsvp(info.event);
   }
 }
 

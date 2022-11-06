@@ -7,6 +7,7 @@ class EventInfo {
   double longitude;
   DateTime startTime;
   DateTime endTime;
+  bool haveRsvp = false;
 
   EventInfo(
       {required this.event,
