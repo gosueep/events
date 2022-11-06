@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:typed_data';
 import 'dart:developer';
 import 'dart:io';
+import 'package:EventsApp/data/types.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:sqflite/sqflite.dart';
@@ -17,14 +18,18 @@ import 'package:flutter/foundation.dart';
 import 'package:network_tools/network_tools.dart';
 import 'package:EventsApp/data/network.dart';
 //import 'package:EventsApp/data/types.dart';
-import 'package:EventsApp/data/mediastore.dart';
+import 'package:EventsApp/data/native_bridge.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class CurrentState extends ChangeNotifier {
   //final RecipeDatabase recipeDatabase = RecipeDatabase();
   final Server server = Server();
+  int texture = 0;
 
   bool hasLoaded = false;
+  bool haveMapController = false;
+  late GoogleMapController mapController;
 
   Future<void> startup() async {
     if (!hasLoaded) {
@@ -38,11 +43,123 @@ class CurrentState extends ChangeNotifier {
       //recipes = await recipeDatabase.getAllRecipes(ingredients);
 
       // Handle this async because it may take a long time
-      //server.startup(recipeDatabase, ingredients, recipes);
+      server.startup();
+
+      texture = await NativeBridge().createTexture();
 
       hasLoaded = true;
       notifyListeners();
     }
+  }
+
+  void setMapController(GoogleMapController controller) {
+    mapController = controller;
+    haveMapController = true;
+    reloadNearbyEvents();
+  }
+
+  void zoomToLocation(double latitude, double longitude) {
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(latitude, longitude), zoom: 18),
+      ),
+    );
+  }
+
+  List<EventInfo> recentEvents = [];
+  List<PersonInfo> recentPeople = [];
+  Future<void> reloadNearbyEvents() async {
+    if (haveMapController) {
+      recentEvents = [
+        EventInfo(
+          event: 0,
+          name: "Mines Bash",
+          description: "A super wacky bash",
+          numberProximity: 2,
+          latitude: 39.7510,
+          longitude: -105.2226,
+          startTime: DateTime.parse('2021-07-20 20:18:04Z'),
+          endTime: DateTime.parse('2022-07-20 20:18:04Z'),
+        ),
+        EventInfo(
+          event: 1,
+          name: "Fall Extravaganza",
+          description: "Tons of free Fall inspired food",
+          numberProximity: 5,
+          latitude: 39.756168,
+          longitude: -105.222649,
+          startTime: DateTime.parse('2021-07-20 20:18:04Z'),
+          endTime: DateTime.parse('2022-07-20 20:18:04Z'),
+        ),
+        EventInfo(
+          event: 1,
+          name: "Rafting",
+          description: "Casual rafting for newcomers",
+          numberProximity: 3,
+          latitude: 39.75,
+          longitude: -105.2226,
+          startTime: DateTime.parse('2021-07-20 20:18:04Z'),
+          endTime: DateTime.parse('2022-07-20 20:18:04Z'),
+        )
+      ];
+
+      recentPeople = [
+        PersonInfo(
+          name: "Bob",
+          latitude: 39.755552,
+          longitude: -105.222685,
+        ),
+        PersonInfo(name: "Harold", latitude: 39.755395, longitude: -105.222388),
+        PersonInfo(name: "Frank", latitude: 39.751252, longitude: -105.221465),
+        PersonInfo(name: "Darwin", latitude: 39.753395, longitude: -105.223388),
+        PersonInfo(name: "Ben", latitude: 39.755252, longitude: -105.223465),
+        PersonInfo(name: "1", latitude: 39.752395, longitude: -105.224388),
+        PersonInfo(name: "2", latitude: 39.757252, longitude: -105.222465),
+        PersonInfo(name: "3", latitude: 39.758395, longitude: -105.223388),
+        PersonInfo(name: "4", latitude: 39.752252, longitude: -105.223465),
+        PersonInfo(name: "1", latitude: 39.751395, longitude: -105.224388),
+        PersonInfo(name: "2", latitude: 39.757252, longitude: -105.227465),
+        PersonInfo(name: "3", latitude: 39.751395, longitude: -105.229388),
+        PersonInfo(name: "4", latitude: 39.751252, longitude: -105.229465),
+      ];
+
+      // Google Cloud issues for now
+      //await server.getCloseEvents(10);
+
+      await NativeBridge().sendRecent(recentEvents, recentPeople);
+      //await NativeBridge().sendRecent(server.recentEvents, server.recentPeople);
+    }
+  }
+
+  List<EventInfo> nearbyEvents() {
+    return recentEvents;
+  }
+
+  List<PersonInfo> nearbyPeople() {
+    return recentPeople;
+  }
+
+  Future<void> sendCameraPosition(
+      double latitude, double longitude, double zoom, double tilt) async {
+    await NativeBridge().sendCameraPosition(latitude, longitude, zoom, tilt);
+  }
+
+  Future<void> sendLocation(double latitude, double longitude) async {
+    await server.sendLocation(latitude, longitude);
+  }
+
+  Future<int> sendCreateEvent(String name, String description, double latitude,
+      double longitude, DateTime start, DateTime end) async {
+    return await server.createEvent(
+        name, description, latitude, longitude, start, end);
+  }
+
+  Future<void> changeName(String name) async {
+    await server.registerName(name);
+  }
+
+  Future<void> sendRsvp(EventInfo info) async {
+    await server.sendRsvp(info.event);
   }
 }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import "dart:async";
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -10,6 +11,7 @@ import 'package:network_tools/network_tools.dart';
 import 'package:EventsApp/data/state.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:EventsApp/data/types.dart';
 
 class Server {
   String? serverIp;
@@ -22,31 +24,30 @@ class Server {
   String? model;
   String? deviceVersion;
 
+  double currentLatitude = 0;
+  double currentLongitude = 0;
+
+  List<EventInfo> recentEvents = [];
+  List<PersonInfo> recentPeople = [];
+
   Server() {
-    if (kReleaseMode) {
-      serverIp = "https://EventsApp.io";
-    }
+    //if (kReleaseMode) {
+    serverIp = "https://events-app-v3xfr7jk4q-uc.a.run.app";
+    //}
   }
 
-/*
-  Future<void> startup(
-      RecipeDatabase database, List<StoreIngredient> initialIngredients, List<Recipe> initialRecipes) async {
-    this.database = database;
-    if (!kReleaseMode && serverIp == null) {
-      // Scan for local IP of dev server on my LAN
-      await HostScanner.scanDevicesForSinglePort("10.0.0", 3000, progressCallback: (progress) {
-        null;
-      }).listen((host) {
-        serverIp = "http://${host.address}:3000";
-      }).asFuture();
-    }
+  Future<void> startup() async {
+    //if (!kReleaseMode && serverIp == null) {
+    //  // Scan for local IP of dev server on my LAN
+    //  await HostScanner.scanDevicesForSinglePort("10.0.0", 3000, progressCallback: (progress) {
+    //    null;
+    //  }).listen((host) {
+    //    serverIp = "http://${host.address}:3000";
+    //  }).asFuture();
+    //}
     user = await getDeviceSpecificID();
     await attemptRegisterDevice();
-
-    // Handle remaining unsynced now
-    await handleUnsynced(initialIngredients, initialRecipes);
   }
-*/
 
 /*
   Future<void> handleUnsynced(List<StoreIngredient> ingredients, List<Recipe> recipes) async {
@@ -94,14 +95,14 @@ class Server {
   Future<void> attemptRegisterDevice() async {
     if (serverIp != null) {
       var body = jsonEncode(<String, Object>{
-        "user": user,
+        "device_id": user,
         "manufacturer": manufacturer ?? "",
         "model": model ?? "",
         "device_version": deviceVersion ?? "",
         "version": (await PackageInfo.fromPlatform()).version
       });
       var res = await http
-          .post(Uri.parse("$serverIp/updates/user"),
+          .post(Uri.parse("$serverIp/startup"),
               headers: <String, String>{
                 "Content-Type": "application/json",
                 "Content-Length": body.codeUnits.length.toString()
@@ -115,6 +116,165 @@ class Server {
         serverIp = null;
       }
     }
+  }
+
+  Future<void> sendLocation(double latitude, double longitude) async {
+    currentLatitude = latitude;
+    currentLongitude = longitude;
+    if (serverIp != null) {
+      var body = jsonEncode(<String, Object>{
+        "device_id": user,
+        "lat": latitude.toString(),
+        "long": longitude.toString()
+      });
+      var res = await http
+          .post(Uri.parse("$serverIp/location"),
+              headers: <String, String>{
+                "Content-Type": "application/json",
+                "Content-Length": body.codeUnits.length.toString()
+              },
+              body: body)
+          .timeout(const Duration(seconds: 5), onTimeout: () async {
+        return http.Response("", 408);
+      });
+
+      if (res.statusCode != 202) {
+        serverIp = null;
+      }
+    }
+  }
+
+  Future<void> sendRsvp(int event) async {
+    if (serverIp != null) {
+      var body = jsonEncode(
+          <String, Object>{"device_id": user, "event": event.toString()});
+      var res = await http
+          .post(Uri.parse("$serverIp/rsvp"),
+              headers: <String, String>{
+                "Content-Type": "application/json",
+                "Content-Length": body.codeUnits.length.toString()
+              },
+              body: body)
+          .timeout(const Duration(seconds: 5), onTimeout: () async {
+        return http.Response("", 408);
+      });
+
+      if (res.statusCode != 202) {
+        serverIp = null;
+      }
+    }
+  }
+
+  Future<void> registerName(String name) async {
+    if (serverIp != null) {
+      var body = jsonEncode(<String, Object>{"device_id": user, "name": name});
+      var res = await http
+          .post(Uri.parse("$serverIp/register"),
+              headers: <String, String>{
+                "Content-Type": "application/json",
+                "Content-Length": body.codeUnits.length.toString()
+              },
+              body: body)
+          .timeout(const Duration(seconds: 5), onTimeout: () async {
+        return http.Response("", 408);
+      });
+
+      if (res.statusCode != 202) {
+        serverIp = null;
+      }
+    }
+  }
+
+  Future<void> getCloseEvents(int withinMiles) async {
+    if (serverIp != null) {
+      var body = jsonEncode(<String, Object>{
+        "device_id": user,
+        "range": withinMiles.toString(),
+        "lat": currentLatitude.toString(),
+        "long": currentLongitude.toString()
+      });
+      var res = await http
+          .post(Uri.parse("$serverIp/events"),
+              headers: <String, String>{
+                "Content-Type": "application/json",
+                "Content-Length": body.codeUnits.length.toString()
+              },
+              body: body)
+          .timeout(const Duration(seconds: 5), onTimeout: () async {
+        return http.Response("", 408);
+      });
+
+      if (res.statusCode != 202) {
+        serverIp = null;
+      } else {
+        var eventInfo = jsonDecode(res.body);
+
+        recentEvents.clear();
+        for (var eventMap in eventInfo["events"]) {
+          var event = EventInfo(
+            event: eventMap["event"] as int,
+            name: eventMap["name"] as String,
+            description: eventMap["description"] as String,
+            numberProximity: eventMap["numberProximity"] as int,
+            latitude: eventMap["lat"] as double,
+            longitude: eventMap["long"] as double,
+            startTime: DateTime.fromMicrosecondsSinceEpoch(
+                eventMap["startTime"] as int),
+            endTime:
+                DateTime.fromMicrosecondsSinceEpoch(eventMap["endTime"] as int),
+          );
+          recentEvents.add(event);
+        }
+
+        recentPeople.clear();
+        for (var personMap in eventInfo["people"]) {
+          var person = PersonInfo(
+            name: personMap["name"] as String,
+            latitude: personMap["lat"] as double,
+            longitude: personMap["long"] as double,
+          );
+          recentPeople.add(person);
+        }
+
+        return;
+      }
+    }
+
+    recentEvents.clear();
+    recentPeople.clear();
+  }
+
+  Future<int> createEvent(String name, String description, double latitude,
+      double longitude, DateTime start, DateTime end) async {
+    if (serverIp != null) {
+      var body = jsonEncode(<String, Object>{
+        "device_id": user,
+        "name": name,
+        "description": description,
+        "latitude": latitude.toString(),
+        "longitude": longitude.toString(),
+        "start_time": start,
+        "end_time": end,
+      });
+      var res = await http
+          .post(Uri.parse("$serverIp/create_event"),
+              headers: <String, String>{
+                "Content-Type": "application/json",
+                "Content-Length": body.codeUnits.length.toString()
+              },
+              body: body)
+          .timeout(const Duration(seconds: 5), onTimeout: () async {
+        return http.Response("", 408);
+      });
+
+      if (res.statusCode != 202) {
+        serverIp = null;
+      } else {
+        return jsonDecode(body)["id"] as int;
+      }
+    }
+
+    return -1;
   }
 
 /*
