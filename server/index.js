@@ -19,7 +19,7 @@ async function test() {
 
 app.get('/', (req, res) => {
   const name = process.env.NAME || 'World';
-  res.send(`Hello ${name}!`);
+  res.send(`Hello ${name} BRUH!`);
 });
 
 app.get('/testGet', (req, res) => {
