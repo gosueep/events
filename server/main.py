@@ -33,22 +33,23 @@ def update_location():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:longp, :latp))", id=d['device_id'], lat=d['lat'], long=d['long'], longp=d['long'], latp=d['lat'])
+        db_conn.execute(text("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:longp, :latp))"), id=d['device_id'], lat=d['lat'], long=d['long'], longp=d['long'], latp=d['lat'])
+        return 202
 
 @app.post("/rsvp")
 def rsvp():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute("UPDATE event SET attendees = attendees + 1 WHERE event_id = :event_id", event_id=d['event'])
+        db_conn.execute(text("UPDATE event SET attendees = attendees + 1 WHERE event_id = :event_id"), event_id=d['event'])
 
         # if already in database / user already RSVP'd, do not add again 
-        if db_conn.execute("COUNT(*) FROM rsvp WHERE event_id = :event_id AND device_id = :device_id") < 1:
-            db_conn.execute("INSERT INTO rsvp (event_id, device_id) VALUES (:event_id, :device_id)", event_id=d['event'], device_id=d['device_id'])
+        if db_conn.execute(text("COUNT(*) FROM rsvp WHERE event_id = :event_id AND device_id = :device_id")) < 1:
+            db_conn.execute(text("INSERT INTO rsvp (event_id, device_id) VALUES (:event_id, :device_id)"), event_id=d['event'], device_id=d['device_id'])
         
         # return number of people rsvp'd
         output = {}
-        output['num_ppl'] = db_conn.execute("COUNT(*) FROM rsvp WHERE event_id = :event_id")
+        output['num_ppl'] = db_conn.execute(text("COUNT(*) FROM rsvp WHERE event_id = :event_id"))
         return json.dumps(output)
 
 # return json dict of people
@@ -57,8 +58,8 @@ def get_events():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        event_info = db_conn.execute("SELECT description, event_id, event_name FROM event WHERE event_id = :event_id", event_id=d['event'], device_id=d['device_id'])
-        ppl_info = db_conn.execute("SELECT name, lat, long WHERE device_id IN (SELECT * FROM (location JOIN profile ON location.device_id = profile.device_id) WHERE (:event_point <@> pos) < :range", event_point=d['event_point'], range=d['range'])
+        event_info = db_conn.execute(text("SELECT description, event_id, event_name FROM event WHERE event_id = :event_id"), event_id=d['event'], device_id=d['device_id'])
+        ppl_info = db_conn.execute(text("SELECT name, lat, long WHERE device_id IN (SELECT * FROM (location JOIN profile ON location.device_id = profile.device_id) WHERE (:event_point <@> pos) < :range"), event_point=d['event_point'], range=d['range'])
         output = {event_info} + {ppl_info}
         return json.dumps(output)
 
@@ -68,15 +69,16 @@ def register_profile():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute("INSERT INTO profile (event_id, device_id) VALUES (:event_id, :device_id)", event_id=d['event'], device_id=d['device_id'])
+        db_conn.execute(text("INSERT INTO profile (event_id, device_id) VALUES (:event_id, :device_id)"), event_id=d['event'], device_id=d['device_id'])
+        return 202
 
 @app.post("/startup")
 def init_device():
     d = request.json 
-    print(d)
     with pool.connect() as db_conn:
         # insert into database
         db_conn.execute(text("INSERT INTO device (id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)"), device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
+        return 202
 
 # RETURN GEN ID
 @app.post("/create_event")
@@ -87,7 +89,7 @@ def create_event():
         db_conn.execute(text("INSERT INTO event (device_id, name, description, start_time, end_time) VALUES (:device_id, :name, :description, :start_time, :end_time)"), device_id=d['device_id'], name=d['name'], description = d['description'], start_time=d['start_time'], end_time=d['end_time'])
         # return db_conn.execute("SELECT event_id FROM event WHERE device_id = ")
         output = {}
-        output['event_id'] = db_conn.execute("SELECT MAX(event_id) FROM event")
+        output['event_id'] = db_conn.execute(text("SELECT MAX(event_id) FROM event"))
         return json.dumps(output)
 
 
