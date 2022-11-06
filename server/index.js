@@ -10,7 +10,7 @@ const credentials = {
 }
 
 async function test() {
-    const pool = new Pool(credentials)
+    const pool = new pg.Pool(credentials)
     const now = await Pool.query("SELECT * from events;")
     await pool.end();
     return now;
