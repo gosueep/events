@@ -32,7 +32,7 @@ def update_location():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:longp, :latp))", id=d['device_id'], lat=d['lat'], long=d['long'], longp=long, latp=lat)
+        db_conn.execute("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:longp, :latp))", id=d['device_id'], lat=d['lat'], long=d['long'], longp=d['long'], latp=d['lat'])
 
 @app.post("/rsvp")
 def rsvp():
@@ -72,6 +72,9 @@ def register_profile():
 @app.post("/startup")
 def init_device():
     d = request.json 
+    print(d)
+    print()
+    print(json.load(d))
     with pool.connect() as db_conn:
         # insert into database
         db_conn.execute("INSERT INTO device (device_id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)", device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
