@@ -33,7 +33,7 @@ def update_location():
     d = request.json 
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute(text("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:longp, :latp))"), id=d['device_id'], lat=d['lat'], long=d['long'], longp=d['long'], latp=d['lat'])
+        db_conn.execute(text("INSERT INTO location (id, lat, long, pos) VALUES (:id, lat, long, point(:long, :lat)) ON CONFLICT id DO UPDATE SET id = :id"), id=d['device_id'], lat=d['lat'], long=d['long'])
         return 202
 
 @app.post("/rsvp")
