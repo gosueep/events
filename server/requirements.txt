@@ -2,4 +2,6 @@ Flask==2.1.0
 gunicorn==20.1.0
 google-api-python-client
 cloud-sql-python-connector
-sqlalchemy
+SQLAlchemy
+python-tds
+sqlalchemy-pytds

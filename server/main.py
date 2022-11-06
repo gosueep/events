@@ -32,7 +32,7 @@ with pool.connect() as db_conn:
     # db_conn.execute(insert_stmt, id="book1", title="Book One")
 
     # query database
-    result = db_conn.execute("SELECT * from events;").fetchall()
+    result = db_conn.execute("SELECT * from events_info;").fetchall()
 
     # Do something with the results
     for row in result:
