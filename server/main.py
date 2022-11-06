@@ -73,8 +73,6 @@ def register_profile():
 def init_device():
     d = request.json 
     print(d)
-    print()
-    print(json.load(d))
     with pool.connect() as db_conn:
         # insert into database
         db_conn.execute("INSERT INTO device (device_id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)", device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
