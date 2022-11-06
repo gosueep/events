@@ -1,5 +1,6 @@
 from google.cloud.sql.connector.connector import Connector
 import sqlalchemy
+from sqlalchemy import text
 import requests, json
 import os
 from flask import Flask, request
@@ -75,7 +76,7 @@ def init_device():
     print(d)
     with pool.connect() as db_conn:
         # insert into database
-        db_conn.execute("INSERT INTO device (device_id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)", device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
+        db_conn.execute(text("INSERT INTO device (device_id, manufacturer, model, device_version, version) VALUES (:device_id, :manufacturer, :model, :device_version, :version)"), device_id=d['device_id'], manufacturer=d['manufacturer'], model=d['model'], device_version=d['device_version'], version=d['version'])
 
 # RETURN GEN ID
 @app.post("/create_event")
