@@ -1,8 +1,8 @@
 from google.cloud.sql.connector import Connector
 import sqlalchemy
-import pg8000
+import requests, json
 import os
-from flask import Flask
+from flask import Flask, request
 
 app = Flask(__name__)
 connector = Connector()
@@ -22,17 +22,11 @@ pool = sqlalchemy.create_engine(
     creator=getconn,
 )
 
-# # insert statement
-# insert_stmt = sqlalchemy.text(
-#     "INSERT INTO my_table (id, title) VALUES (:id, :title)",
-# )
 
 with pool.connect() as db_conn:
-    # insert into database
-    # db_conn.execute(insert_stmt, id="book1", title="Book One")
 
     # query database
-    result = db_conn.execute("SELECT * from events_info;").fetchall()
+    result = db_conn.execute('SELECT * from pg_catalog.pg_tables').fetchall()
 
     # Do something with the results
     for row in result:
@@ -44,15 +38,32 @@ def hello_world():
     name = os.environ.get("NAME", "World")
     return "Hello {}".format(getconn())
 
-@app.route("/testGet")
-def test_get():
-    pool = sqlalchemy.create_engine(
-        "postgresql+pg8000://",
-        creator=getconn,
-    )
+@app.route("/location")
+def update_location():
+    d = request.json 
     with pool.connect() as db_conn:
-        result = db_conn.execute("SELECT * from events_info;").fetchall()
-    return result
+        # insert into database
+        db_conn.execute("INSERT INTO devices (id, lat, long) VALUES (:id, :lat, :long)", id=d['device_id'], lat=d['lat'], long=d['long'])
+
+app.route("/rsvp")
+def update_location():
+    d = request.json 
+    with pool.connect() as db_conn:
+        # insert into database
+        db_conn.execute("UPDATE events SET attendees = attendees + 1 WHERE event_id = :event_id", event_id=d['event'])
+        # todo - check if already in
+        db_conn.execute("INSERT INTO rsvp (event_id, device_id) VALUES (:event_id, :device_id)", event_id=d['event'], device_id=d['device_id'])
+
+app.route("/events")
+def update_location():
+    d = request.json 
+    with pool.connect() as db_conn:
+        # insert into database
+        db_conn.execute("UPDATE events SET attendees = attendees + 1 WHERE event_id = :event_id", event_id=d['event'])
+        # todo - check if already in
+        db_conn.execute("INSERT INTO rsvp (event_id, device_id) VALUES (:event_id, :device_id)", event_id=d['event'], device_id=d['device_id'])
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

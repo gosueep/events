@@ -5,3 +5,5 @@ cloud-sql-python-connector
 SQLAlchemy
 python-tds
 sqlalchemy-pytds
+requests
+json
