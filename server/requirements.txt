@@ -6,4 +6,3 @@ SQLAlchemy
 python-tds
 sqlalchemy-pytds
 requests
-json
