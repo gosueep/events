@@ -22,6 +22,10 @@ app.get('/', (req, res) => {
   res.send(`Hello ${name}!`);
 });
 
+app.get('/testGet', (req, res) => {
+  res.send('HELP')
+});
+
 app.get('/test', (req, res) => {
     res.send(test())
 });
